@@ -1,23 +1,21 @@
 {
   "name": "Portal Wali Santri",
   "short_name": "Portal Wali",
-  "description": "Monitoring Kehadiran & Kegiatan Anak",
-  "start_url": "index.html",
+  "start_url": "./",
   "display": "standalone",
   "background_color": "#F8F9FA",
   "theme_color": "#04432A",
+  "description": "Aplikasi monitoring kehadiran dan kegiatan anak.",
   "icons": [
     {
-      "src": "icon-192.png",
+      "src": "CompressJPEG.Online_img(192x192).png",
       "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any maskable"
+      "type": "image/png"
     },
     {
-      "src": "icon-512.png",
+      "src": "CompressJPEG.Online_img(512x512) (1).png",
       "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any maskable"
+      "type": "image/png"
     }
   ]
 }
