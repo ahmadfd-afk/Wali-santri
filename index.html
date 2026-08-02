@@ -4,41 +4,23 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Portal Wali Santri - Monitoring Anak</title>
-
-    <!-- ============ PWA META TAGS ============ -->
-    <meta name="theme-color" content="#04432A">
-    <meta name="background-color" content="#04432A">
-    <meta name="description" content="Portal Wali Santri untuk monitoring kehadiran, kegiatan, dan evaluasi anak secara real-time">
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Portal Wali">
-    <meta name="application-name" content="Portal Wali Santri">
-    <meta name="format-detection" content="telephone=no">
-    <meta name="msapplication-TileColor" content="#04432A">
-    <meta name="msapplication-tap-highlight" content="no">
-
-    <!-- ============ MANIFEST PWA ============ -->
+    
+    <!-- PWA Meta Tags -->
     <link rel="manifest" href="manifest.json">
-
-    <!-- ============ ICONS ============ -->
-    <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
-    <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
+    <meta name="theme-color" content="#04432A">
     <link rel="apple-touch-icon" href="icon-192.png">
-    <link rel="apple-touch-icon" sizes="192x192" href="icon-192.png">
-    <link rel="apple-touch-icon" sizes="512x512" href="icon-512.png">
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root { --primary: #04432A; --accent: #D4AF37; --bg: #F8F9FA; --card: #ffffff; --text: #2C3E50; --danger: #E74C3C; --success: #27AE60; }
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; -webkit-tap-highlight-color: transparent; }
-        body { background: #000; color: var(--text); display: flex; justify-content: center; overscroll-behavior-y: contain; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
+        body { background: #000; color: var(--text); display: flex; justify-content: center; }
         .app-container { width: 100%; max-width: 500px; min-height: 100vh; background: var(--bg); position: relative; display: flex; flex-direction: column; }
-
-        header { background: linear-gradient(135deg, var(--primary), #0B6B46); color: white; padding: 25px 20px; text-align: center; border-bottom-left-radius: 28px; border-bottom-right-radius: 28px; border-bottom: 4px solid var(--accent); box-shadow: 0 10px 20px rgba(0,0,0,0.1); transition: 0.3s; padding-top: calc(25px + env(safe-area-inset-top)); }
+        
+        header { background: linear-gradient(135deg, var(--primary), #0B6B46); color: white; padding: 25px 20px; text-align: center; border-bottom-left-radius: 28px; border-bottom-right-radius: 28px; border-bottom: 4px solid var(--accent); box-shadow: 0 10px 20px rgba(0,0,0,0.1); transition: 0.3s; }
         .header-logo-img { width: 65px; height: 65px; border-radius: 50%; display: none; margin: 0 auto 10px auto; border: 2px solid var(--accent); object-fit: cover; background: #fff; padding: 3px; }
-
-        main { padding: 16px; flex: 1; position: relative; padding-bottom: calc(16px + env(safe-area-inset-bottom)); }
+        
+        main { padding: 16px; flex: 1; position: relative; }
         .card { background: var(--card); border-radius: 16px; padding: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.06); margin-bottom: 16px; }
         .btn-primary { background: linear-gradient(135deg, var(--accent), #B5952F); color: white; border: none; padding: 14px; border-radius: 12px; font-weight: bold; width: 100%; cursor: pointer; text-align: center; display: block; font-size: 0.95rem; }
         .btn-outline { background: transparent; color: var(--primary); border: 2px solid var(--primary); padding: 10px; border-radius: 10px; font-weight: bold; width: 100%; cursor: pointer; margin-top: 10px; }
@@ -49,57 +31,11 @@
         .stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 10px; text-align: center; }
         .stat-box { background: #f1f4f3; padding: 8px 4px; border-radius: 8px; font-size: 0.75rem; font-weight: bold; }
         input { width: 100%; padding: 12px; border-radius: 10px; border: 1px solid #ddd; margin-bottom: 10px; font-size: 0.9rem; }
-
+        
         #loading-overlay { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(255,255,255,0.9); z-index: 100; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 16px; }
-
-        /* ============ PWA INSTALL BANNER ============ */
-        #install-banner {
-            position: fixed; bottom: 15px; left: 50%; transform: translateX(-50%);
-            max-width: 460px; width: calc(100% - 30px);
-            background: linear-gradient(135deg, var(--primary), #0B6B46);
-            color: white; padding: 12px 15px; border-radius: 14px;
-            box-shadow: 0 8px 25px rgba(0,0,0,0.3);
-            display: none; z-index: 9999;
-            align-items: center; gap: 10px;
-        }
-        #install-banner .msg { flex: 1; font-size: 0.82rem; line-height: 1.3; }
-        #install-banner button { background: var(--accent); color: #04432A; border: none; padding: 8px 14px; border-radius: 8px; font-weight: bold; font-size: 0.8rem; cursor: pointer; }
-        #install-banner .close-btn { background: transparent; color: white; padding: 4px 8px; font-size: 1rem; }
-
-        /* ============ TOAST NOTIFIKASI ============ */
-        #toast {
-            position: fixed; top: 20px; left: 50%; transform: translateX(-50%) translateY(-100px);
-            background: rgba(0,0,0,0.85); color: white; padding: 10px 18px; border-radius: 24px;
-            font-size: 0.85rem; z-index: 10000; transition: transform 0.3s; max-width: 90%;
-        }
-        #toast.show { transform: translateX(-50%) translateY(0); }
-
-        /* ============ STATUS ONLINE/OFFLINE BADGE ============ */
-        #network-status {
-            position: fixed; top: 8px; right: 8px; z-index: 9998;
-            padding: 4px 10px; border-radius: 12px; font-size: 0.7rem; font-weight: bold;
-            color: white; box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-            top: calc(8px + env(safe-area-inset-top));
-        }
-        #network-status.online { background: var(--success); }
-        #network-status.offline { background: var(--danger); }
     </style>
 </head>
 <body>
-
-<!-- Network Status Badge -->
-<div id="network-status" class="online"><i class="fa-solid fa-wifi"></i> Online</div>
-
-<!-- Toast Notification -->
-<div id="toast"></div>
-
-<!-- Install Banner -->
-<div id="install-banner">
-    <i class="fa-solid fa-download" style="font-size: 1.4rem;"></i>
-    <div class="msg">Install aplikasi ini ke HP Anda untuk akses lebih cepat & notifikasi</div>
-    <button id="btn-install">Install</button>
-    <button class="close-btn" id="btn-install-close">✕</button>
-</div>
 
 <div class="app-container">
     <header id="app-header">
@@ -114,7 +50,7 @@
             <i class="fa-solid fa-qrcode" style="font-size: 3.5rem; color: var(--primary); margin-bottom: 15px;"></i>
             <h3 style="color: var(--primary); margin-bottom: 8px;">Hubungkan Data Anak</h3>
             <p style="font-size: 0.8rem; color: #666; margin-bottom: 15px;">Arahkan kamera ke QR Code pada Kartu Identitas anak untuk menarik identitas instansi secara otomatis.</p>
-
+            
             <button class="btn-primary" onclick="bukaScannerWali()"><i class="fa-solid fa-camera"></i> Buka Kamera Scan QR</button>
             <div id="reader-wali" style="width: 100%; margin-top: 15px; display: none;"></div>
             <button class="btn-outline hidden" id="btn-tutup-kamera" onclick="tutupScannerWali()">Tutup Kamera</button>
@@ -124,13 +60,7 @@
                 <input type="text" id="input-nis-manual" placeholder="Masukkan NIS Peserta / Santri...">
                 <button class="btn-outline" style="margin-top: 0; background: var(--primary); color: white;" onclick="cariNISManual()"><i class="fa-solid fa-cloud-arrow-down"></i> Tarik Data Online</button>
             </div>
-
-            <!-- TOMBOL AKTIFKAN NOTIFIKASI PUSH -->
-            <button class="btn-outline" style="font-size:0.8rem; border-color:var(--accent); color:#B5952F; margin-top:10px;" onclick="aktifkanNotifPush()">
-                <i class="fa-solid fa-bell"></i> Aktifkan Notifikasi Push
-            </button>
-
-            <button class="btn-outline" style="font-size:0.75rem; border-color:#bbb; color:#666; margin-top:10px;" onclick="bukaSettingServer()"><i class="fa-solid fa-gear"></i> Pengaturan Server Manual</button>
+            <button class="btn-outline" style="font-size:0.75rem; border-color:#bbb; color:#666; margin-top:15px;" onclick="bukaSettingServer()"><i class="fa-solid fa-gear"></i> Pengaturan Server Manual</button>
         </div>
 
         <!-- VIEW: SETTING SERVER MANUAL -->
@@ -145,7 +75,7 @@
             <button class="btn-outline" onclick="tutupSettingServer()">KEMBALI</button>
         </div>
 
-        <!-- VIEW: PROFIL & LAPORAN ANAK (TOTAL ONLINE) -->
+        <!-- VIEW: PROFIL & LAPORAN ANAK -->
         <div id="view-profil" class="hidden">
             <div class="card" style="display: flex; gap: 15px; align-items: center; border-left: 4px solid var(--accent); position: relative;">
                 <div id="loading-overlay" class="hidden">
@@ -162,13 +92,12 @@
                 </div>
             </div>
 
-            <!-- TOGGLE LIVE MONITORING SUARA -->
             <div style="margin-bottom: 16px; background: rgba(4, 67, 42, 0.08); padding: 14px; border-radius: 12px; border: 1px dashed var(--primary);">
                 <label style="display: flex; align-items: center; justify-content: space-between; font-size: 0.85rem; font-weight: bold; color: var(--primary);">
                     <span id="label-live-notif"><i class="fa-solid fa-satellite-dish" id="icon-live"></i> Notifikasi Suara Otomatis</span>
                     <input type="checkbox" id="toggle-live-notif" onchange="toggleLiveMonitoring()" style="width: auto; margin: 0; transform: scale(1.4);">
                 </label>
-                <p style="font-size: 0.7rem; color: #555; margin-top: 10px; line-height: 1.4;">Aktifkan lalu biarkan layar HP tetap menyala. HP akan berbunyi otomatis + menampilkan notifikasi push saat ada update absensi anak dari Ustadz/Guru di waktu nyata.</p>
+                <p style="font-size: 0.7rem; color: #555; margin-top: 10px; line-height: 1.4;">Aktifkan lalu biarkan layar HP tetap menyala. HP akan berbunyi otomatis saat ada update absensi anak dari Ustadz/Guru di waktu nyata.</p>
             </div>
 
             <div class="card">
@@ -186,7 +115,7 @@
                     </table>
                 </div>
             </div>
-
+            
             <div class="card">
                 <h3 style="font-size: 0.95rem; color: var(--primary); margin-bottom: 10px;"><i class="fa-solid fa-star"></i> Nilai Evaluasi (Kelulusan)</h3>
                 <div id="p-evaluasi-box" style="font-size: 0.82rem; background: #f8f9fa; padding: 10px; border-radius: 8px;">Belum ada nilai evaluasi.</div>
@@ -201,37 +130,24 @@
 </div>
 
 <script src="https://unpkg.com/html5-qrcode"></script>
-<script src="pwa-init.js"></script>
 <script>
     let html5QrWali = null;
-
-    // VARIABEL GLOBAL
     let liveInterval = null;
-    let lastAbsensiCount = 0;
-    let currentModeYayasan = 'pondok';
+    let lastAbsensiCount = 0; 
+    let currentModeYayasan = 'pondok'; 
     let currentNisAnak = '';
     let cloudConfigCache = { u: '', k: '' };
 
-    // AUTO-LOGIN (TOTAL ONLINE LOGIC) SAAT APLIKASI DIBUKA
     document.addEventListener('DOMContentLoaded', () => {
         let savedConf = localStorage.getItem('wali_sup_conf');
         let savedNis = localStorage.getItem('wali_saved_nis');
         if (savedConf && savedNis) {
             document.getElementById('input-nis-manual').value = savedNis;
-            prosesDataHasilScanWali(savedNis);
+            prosesDataHasilScanWali(savedNis); 
         }
     });
 
-    async function bukaScannerWali() {
-        // Minta izin kamera secara eksplisit (PWA best practice)
-        try {
-            const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
-            stream.getTracks().forEach(t => t.stop()); // Lepas dulu, biarkan html5-qrcode yang pakai
-        } catch (err) {
-            alert("Izin kamera ditolak! Silakan izinkan akses kamera melalui pengaturan browser.");
-            return;
-        }
-
+    function bukaScannerWali() {
         document.getElementById('reader-wali').style.display = 'block';
         document.getElementById('btn-tutup-kamera').classList.remove('hidden');
         if(!html5QrWali) {
@@ -280,7 +196,6 @@
         alert("Konfigurasi server berhasil disimpan!"); tutupSettingServer();
     }
 
-    // FUNGSI UTAMA PENARIKAN DATA CLOUD (TOTAL ONLINE)
     async function prosesDataHasilScanWali(rawText) {
         let nis = String(rawText).trim(); let supabaseUrl = ""; let supabaseKey = "";
 
@@ -291,7 +206,7 @@
 
         if (!supabaseUrl || !supabaseKey) {
             let savedConf = localStorage.getItem('wali_sup_conf');
-            if (savedConf) { let c = JSON.parse(savedConf); supabaseUrl = c.u; supabaseKey = c.k; }
+            if (savedConf) { let c = JSON.parse(savedConf); supabaseUrl = c.u; supabaseKey = c.k; } 
             else { return alert("Koneksi server belum diatur. Mohon scan QR Card anak Anda terlebih dahulu."); }
         } else {
             localStorage.setItem('wali_sup_conf', JSON.stringify({ u: supabaseUrl, k: supabaseKey }));
@@ -306,11 +221,11 @@
                 method: 'GET', headers: { 'apikey': supabaseKey, 'Authorization': `Bearer ${supabaseKey}` }
             });
             let dataServer = await res.json();
-
+            
             if(dataServer && dataServer.length > 0) {
                 let dbCloud = dataServer[0];
                 let santri = (dbCloud.data_santri || []).find(s => String(s.nis) === String(nis));
-
+                
                 if (!santri) {
                     document.getElementById('view-profil').classList.add('hidden');
                     document.getElementById('view-scan').classList.remove('hidden');
@@ -334,9 +249,6 @@
                 lastAbsensiCount = (dbCloud.data_absensi || []).length;
                 localStorage.setItem('wali_saved_nis', nis);
 
-                // Cache data untuk offline
-                try { localStorage.setItem('wali_last_data', JSON.stringify(dbCloud)); } catch(e){}
-
                 document.getElementById('p-foto').src = santri.foto || 'https://cdn-icons-png.flaticon.com/512/847/847969.png';
                 document.getElementById('p-nama').innerText = santri.nama;
                 document.getElementById('p-nis').innerText = santri.nis;
@@ -348,7 +260,7 @@
                 if (izinSedangKeluar.length > 0) {
                     let iz = izinSedangKeluar[izinSedangKeluar.length - 1];
                     izinStr = `<span style="color:#D35400; font-weight:bold;">SEDANG IZIN KELUAR</span><br>Keperluan: ${iz.keperluan}<br>Wajib Balik: <strong>${iz.tgl_balik}</strong>`;
-                } else if (izinAktif.length > 0) { izinStr = `Anak di lokasi instansi. Total riwayat izin: <strong>${izinAktif.length} kali</strong>.`; }
+                } else if (izinAktif.length > 0) { izinStr = `Anak di lokasi instansi. Total riwayat izin: <strong>${izinAktif.length} kali</strong>.`; } 
                 else { izinStr = "Anak di lokasi instansi (Belum pernah izin keluar)."; }
                 document.getElementById('p-status-izin').innerHTML = izinStr;
 
@@ -375,20 +287,14 @@
 
                 document.getElementById('loading-overlay').classList.add('hidden');
 
-            } else {
-                alert("Data server kosong.");
+            } else { 
+                alert("Data server kosong."); 
                 document.getElementById('loading-overlay').classList.add('hidden');
                 document.getElementById('view-profil').classList.add('hidden');
                 document.getElementById('view-scan').classList.remove('hidden');
             }
-        } catch (err) {
-            // Fallback ke cache offline jika ada
-            let cached = localStorage.getItem('wali_last_data');
-            if (cached && !navigator.onLine) {
-                showToast("Mode Offline: menampilkan data cache terakhir");
-            } else {
-                alert("Gagal terhubung ke server cloud. Periksa koneksi internet Anda.");
-            }
+        } catch (err) { 
+            alert("Gagal terhubung ke server cloud. Periksa koneksi internet Anda."); 
             document.getElementById('loading-overlay').classList.add('hidden');
             document.getElementById('view-profil').classList.add('hidden');
             document.getElementById('view-scan').classList.remove('hidden');
@@ -398,38 +304,31 @@
     function gantiAnak() {
         document.getElementById('toggle-live-notif').checked = false;
         toggleLiveMonitoring();
-
+        
         localStorage.removeItem('wali_saved_nis');
         document.getElementById('header-yayasan-logo').style.display = 'none';
         document.getElementById('header-yayasan-nama').innerText = 'Portal Wali / Orang Tua';
         document.getElementById('header-yayasan-sub').innerText = 'Monitoring Kehadiran & Kegiatan Anak';
-
+        
         document.getElementById('view-profil').classList.add('hidden');
         document.getElementById('view-scan').classList.remove('hidden');
     }
 
-    // --- LOGIKA LIVE MONITORING & SUARA OTOMATIS ---
     function toggleLiveMonitoring() {
         const isAktif = document.getElementById('toggle-live-notif').checked;
         const iconLive = document.getElementById('icon-live');
-
+        
         if (isAktif) {
             if (!('speechSynthesis' in window)) {
                 alert("Maaf, Browser/HP Anda tidak mendukung fitur suara robot otomatis.");
                 document.getElementById('toggle-live-notif').checked = false; return;
             }
-
-            // Minta izin notifikasi push saat mengaktifkan live monitoring
-            if ('Notification' in window && Notification.permission === 'default') {
-                Notification.requestPermission();
-            }
-
             iconLive.classList.add('fa-beat-fade'); iconLive.style.color = 'var(--danger)';
-            alert("Notifikasi Suara AKTIF!\n\nMohon biarkan layar HP terbuka. Sistem akan menarik data terbaru dari server setiap 15 detik + kirim notifikasi push ke sistem.");
-
+            alert("Notifikasi Suara AKTIF!\n\nMohon biarkan layar HP terbuka dan tab ini jangan ditutup. Sistem akan menarik data terbaru dari server setiap 15 detik secara otomatis.");
+            
             let s = new SpeechSynthesisUtterance("Monitoring diaktifkan."); s.lang = 'id-ID'; window.speechSynthesis.speak(s);
-
-            liveInterval = setInterval(cekAbsenTerbaru, 15000);
+            
+            liveInterval = setInterval(cekAbsenTerbaru, 15000); 
         } else {
             iconLive.classList.remove('fa-beat-fade'); iconLive.style.color = 'inherit';
             clearInterval(liveInterval);
@@ -445,17 +344,16 @@
             if (dataServer && dataServer.length > 0) {
                 let dbCloud = dataServer[0];
                 let listAbsensi = dbCloud.data_absensi || [];
-
+                
                 if (dbCloud.data_yayasan && dbCloud.data_yayasan.mode) { currentModeYayasan = dbCloud.data_yayasan.mode; }
 
                 if (listAbsensi.length > lastAbsensiCount) {
                     let sesiTerbaru = listAbsensi[listAbsensi.length - 1];
                     let absenAnakSaya = (sesiTerbaru.detail || []).find(d => String(d.nis) === String(currentNisAnak));
-
+                    
                     if (absenAnakSaya) {
                         bunyikanSuaraNotifikasi(absenAnakSaya.status);
-                        kirimPushNotifikasi(absenAnakSaya.status, sesiTerbaru.mapel);
-                        refreshUIAbsensiHanyaTabel(listAbsensi);
+                        refreshUIAbsensiHanyaTabel(listAbsensi); 
                     }
                     lastAbsensiCount = listAbsensi.length;
                 }
@@ -469,50 +367,23 @@
         if (currentModeYayasan === 'sekolah') kegiatan = "sekolah";
         if (currentModeYayasan === 'pelatihan') kegiatan = "pelatihan";
 
-        if (statusAbsen === 'Hadir') { teksSuara = `Alhamdulillah, anak anda hadir dan sedang mengikuti kegiatan ${kegiatan}.`; }
-        else if (statusAbsen === 'Alpa' || statusAbsen === 'Belum') { teksSuara = `Perhatian. Anak anda tercatat alfa, dan tidak mengikuti kegiatan ${kegiatan} saat ini.`; }
-        else if (statusAbsen === 'Izin') { teksSuara = `Informasi. Anak anda tercatat izin pada kegiatan ${kegiatan} saat ini.`; }
+        if (statusAbsen === 'Hadir') { teksSuara = `Alhamdulillah, anak anda hadir dan sedang mengikuti kegiatan ${kegiatan}.`; } 
+        else if (statusAbsen === 'Alpa' || statusAbsen === 'Belum') { teksSuara = `Perhatian. Anak anda tercatat alfa, and tidak mengikuti kegiatan ${kegiatan} saat ini.`; } 
+        else if (statusAbsen === 'Izin') { teksSuara = `Informasi. Anak anda tercatat izin pada kegiatan ${kegiatan} saat ini.`; } 
         else if (statusAbsen === 'Sakit') { teksSuara = `Informasi. Anak anda tercatat sakit pada kegiatan ${kegiatan} saat ini.`; }
 
         if (teksSuara !== "") {
-            window.speechSynthesis.cancel();
+            window.speechSynthesis.cancel(); 
             const utterance = new SpeechSynthesisUtterance(teksSuara);
             utterance.lang = 'id-ID'; utterance.rate = 0.9;
             window.speechSynthesis.speak(utterance);
         }
     }
 
-    // ============ PUSH NOTIFIKASI (PWA) ============
-    function kirimPushNotifikasi(status, mapel) {
-        if (!('Notification' in window)) return;
-        if (Notification.permission !== 'granted') return;
-
-        let title = "📢 Update Absensi Anak";
-        let body = `Anak Anda tercatat "${status}" pada kegiatan ${mapel}`;
-        let icon = 'icon-192.png';
-
-        // Kirim via service worker (agar bisa muncul walaupun tab tertutup)
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.ready.then(reg => {
-                reg.showNotification(title, {
-                    body: body,
-                    icon: icon,
-                    badge: icon,
-                    vibrate: [200, 100, 200],
-                    tag: 'absensi-anak',
-                    renotify: true,
-                    data: { url: '/', ts: Date.now() }
-                });
-            });
-        } else {
-            new Notification(title, { body: body, icon: icon });
-        }
-    }
-
     function refreshUIAbsensiHanyaTabel(listAbsensiSemua) {
         let tbodyAbsen = document.getElementById('tabel-absen-anak'); tbodyAbsen.innerHTML = '';
         let cnt = { Hadir: 0, Izin: 0, Sakit: 0, Alpa: 0 }; let adaAbsen = false;
-
+        
         listAbsensiSemua.forEach(sesi => {
             (sesi.detail || []).forEach(d => {
                 if (String(d.nis) === String(currentNisAnak)) {
@@ -522,7 +393,7 @@
                 }
             });
         });
-
+        
         document.getElementById('stat-absen-grid').innerHTML = `
             <div class="stat-box" style="color:var(--success);">Hadir<br>${cnt.Hadir}</div>
             <div class="stat-box" style="color:#2980b9;">Izin<br>${cnt.Izin}</div>
@@ -530,6 +401,15 @@
             <div class="stat-box" style="color:var(--danger);">Alpa<br>${cnt.Alpa}</div>
         `;
         if(!adaAbsen) tbodyAbsen.innerHTML = '<tr><td colspan="3" align="center">Belum ada catatan absensi kelas.</td></tr>';
+    }
+
+    // REGISTRASI SERVICE WORKER UNTUK PWA
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('sw.js')
+                .then(reg => console.log('Service Worker terdaftar untuk PWA', reg.scope))
+                .catch(err => console.error('Service Worker gagal didaftarkan', err));
+        });
     }
 </script>
 </body>
