@@ -1,105 +1,84 @@
-# 🕌 Salam - Sistem Aplikasi Laporan Anak Mengaji
+# Salam - Sistem Aplikasi Laporan Anak Mengaji
 
-**Salam** adalah Progressive Web App (PWA) untuk sistem laporan & monitoring kehadiran anak mengaji secara real-time, dilengkapi notifikasi push yang **kuat & persistent**.
-
-![Salam Icon](icons/icon-192x192.png)
-
-## ✨ Fitur Utama
-
-- 📱 **Progressive Web App (PWA)** - Bisa di-install di HP seperti aplikasi native (Android/iOS/Desktop)
-- 🔔 **Notifikasi Kuat & Tidak Bisa Distop Otomatis** - `requireInteraction: true`, `renotify: true`
-- 🌙 **Background Sync + Periodic Sync** - Cek update otomatis walau aplikasi ditutup
-- 💤 **Wake Lock API** - Cegah HP sleep saat aplikasi aktif
-- 📷 **QR Scanner** - Scan kartu identitas untuk tarik data anak
-- 🗂️ **Offline Support** - Service Worker cache untuk offline-first
-- 🔊 **Text-to-Speech (TTS)** - Suara laporan otomatis Bahasa Indonesia
-- 📊 **Rekap Absensi & Nilai Evaluasi** - Real-time dari database cloud
-- 🎨 **Icon Custom** - Icon Islamic family kartun (dari upload user)
+PWA (Progressive Web App) untuk monitoring & laporan kehadiran anak mengaji secara real-time bagi wali/orang tua.
 
 ## 🚀 Cara Hosting di GitHub Pages
 
-1. **Buat repository baru** di GitHub (contoh: `salam-app`)
-2. **Upload semua file** dari ZIP ini ke repository (di root, JANGAN dalam folder)
-3. **Aktifkan GitHub Pages**:
-   - Buka repository → **Settings** → **Pages**
-   - Source: **Deploy from a branch**
-   - Branch: **main** / **master**, Folder: **/ (root)**
-   - Klik **Save**
-4. **Tunggu 1-2 menit**, aplikasi akan tersedia di:
-   ```
-   https://USERNAME.github.io/salam-app/
-   ```
-5. **Buka URL di HP** → Chrome akan menampilkan banner "Install Salam" → klik Install
+1. **Buat repository baru** di GitHub (misal: `salam-pwa`).
+2. **Upload SEMUA file** dalam folder ini ke root repository (tanpa subfolder).
+3. Buka **Settings → Pages**.
+4. Pada **Source** pilih branch `main` (atau `master`) dan folder `/ (root)`.
+5. Klik **Save**. Tunggu ~1 menit.
+6. Aplikasi akan tersedia di:
+   `https://<username>.github.io/salam-pwa/`
 
-## 📂 Struktur File
+> ⚠️ **PENTING**: PWA HARUS diakses melalui HTTPS. GitHub Pages sudah otomatis HTTPS, jadi aman.
+
+## 📱 Cara Install PWA di HP
+
+### Android (Chrome):
+1. Buka URL GitHub Pages di Chrome.
+2. Muncul banner **"Install Salam"** → klik **Install**.
+3. Atau: menu ⋮ → **Add to Home screen**.
+4. Aplikasi akan muncul di layar utama seperti app native.
+
+### iPhone (Safari):
+1. Buka URL di Safari.
+2. Tekan tombol **Share** (kotak dengan panah ke atas).
+3. Pilih **Add to Home Screen**.
+
+## 🔔 Notifikasi Kuat & Sulit Distop
+
+Aplikasi ini dilengkapi dengan:
+- ✅ **Push Notification** dengan `requireInteraction: true` (notifikasi tidak hilang otomatis)
+- ✅ **Vibrasi kuat** dengan pola berulang
+- ✅ **Text-to-Speech (TTS)** dalam Bahasa Indonesia
+- ✅ **Wake Lock API** — mencegah HP tidur agresif
+- ✅ **Periodic Background Sync** (Chrome) — cek data tiap menit di background
+- ✅ **Service Worker heartbeat** — polling data terus menerus
+- ✅ **Keep-alive interval** — SW tetap hidup
+- ✅ **Notifikasi persisten** — tetap muncul walau app ditutup
+- ✅ **Icon, badge, image, dan actions** notifikasi lengkap
+
+## 📂 Struktur File (SEMUA DALAM 1 FOLDER)
 
 ```
-salam-app/
-├── index.html              # Aplikasi utama (dengan PWA & notifikasi kuat)
-├── manifest.json           # PWA Manifest
-├── sw.js                   # Service Worker (push + background sync)
-├── favicon.ico             # Favicon
-├── README.md               # Dokumentasi
-├── .nojekyll               # Bypass Jekyll di GitHub Pages
-└── icons/
-    ├── icon-72x72.png
-    ├── icon-96x96.png
-    ├── icon-128x128.png
-    ├── icon-144x144.png
-    ├── icon-152x152.png
-    ├── icon-180x180.png
-    ├── icon-192x192.png
-    ├── icon-256x256.png
-    ├── icon-384x384.png
-    ├── icon-512x512.png
-    ├── maskable-192x192.png
-    └── maskable-512x512.png
+index.html               → Halaman utama aplikasi
+manifest.json            → Manifest PWA
+sw.js                    → Service Worker (notifikasi background)
+icon-72.png              → Icon 72px
+icon-96.png              → Icon 96px
+icon-128.png             → Icon 128px
+icon-144.png             → Icon 144px
+icon-152.png             → Icon 152px
+icon-192.png             → Icon 192px (utama)
+icon-384.png             → Icon 384px
+icon-512.png             → Icon 512px (splash screen)
+icon-maskable-192.png    → Icon adaptif Android
+icon-maskable-512.png    → Icon adaptif Android besar
+apple-touch-icon.png     → Icon untuk iOS
+favicon.png              → Favicon browser
+README.md                → Panduan ini
 ```
 
-## 🔔 Kenapa Notifikasi Kuat & "Tidak Bisa Distop"?
+## ⚙️ Tips Agar Notifikasi Maksimal
 
-Beberapa teknik yang digunakan agar notifikasi Salam sangat persistent:
+Setelah install PWA di HP:
+1. Buka **Settings HP → Apps → Salam** (atau "Chrome" untuk Android).
+2. **Nonaktifkan Battery Optimization** untuk aplikasi Salam.
+3. **Izinkan Notifikasi** (Allow all).
+4. **Izinkan Background Data**.
+5. Untuk **Xiaomi/Oppo/Vivo**: Aktifkan **Autostart** dan **Lock in recent apps**.
 
-| Teknik | Fungsi |
-|--------|--------|
-| `requireInteraction: true` | Notifikasi tetap tampil sampai user tap/tutup manual |
-| `renotify: true` | Update notifikasi tetap bunyi walau tag sama |
-| Vibrate pattern panjang | `[300,100,300,100,300,100,500]` — getar kuat |
-| Push Actions | Tombol "Buka Aplikasi" & "Tutup" langsung di notifikasi |
-| Periodic Background Sync | SW cek update tiap 15 menit walau app tertutup |
-| Background Sync API | Retry otomatis jika offline |
-| Wake Lock API | HP tidak sleep saat aplikasi aktif |
-| Heartbeat 30 detik | Client → SW keep-alive |
-| Banner reminder | Kalau user block notifikasi, banner merah persistent muncul |
-| Service Worker `activate` + `skipWaiting` | SW langsung aktif tanpa perlu refresh |
+## 🔧 Kustomisasi
 
-## ⚠️ Catatan Penting
+- Warna tema: edit `--primary: #04432A` dan `--accent: #D4AF37` di `index.html`.
+- Nama aplikasi: edit `name` dan `short_name` di `manifest.json`.
+- Icon: replace file `icon-*.png` dengan icon Anda (ukuran harus sama).
 
-- **HTTPS wajib** - PWA & Notification API hanya jalan di HTTPS (GitHub Pages sudah otomatis HTTPS ✅)
-- **Notifikasi bergantung izin user** - Browser modern (Chrome/Edge/Safari) tetap punya kontrol final. Tidak ada teknologi web yang benar-benar "tidak bisa distop" oleh sistem operasi, tapi kombinasi teknik di atas membuatnya **sangat sulit terlewat**.
-- **iOS Safari 16.4+** - Push notification support di iOS baru mulai versi 16.4 (Maret 2023), dan hanya bekerja jika PWA sudah di-install ke home screen.
-- **Battery Optimization Android** - Sarankan user untuk mematikan battery optimization di setting Android untuk aplikasi ini (Chrome/PWA), agar Periodic Sync tidak dibunuh sistem.
+## 📄 Lisensi
 
-## 🛠️ Testing Notifikasi
-
-Setelah install, buka Console browser (F12) di aplikasi & jalankan:
-
-```javascript
-navigator.serviceWorker.controller.postMessage({
-  type: 'SHOW_NOTIFICATION',
-  payload: {
-    title: '🕌 Test Salam',
-    body: 'Notifikasi test - kuat & persistent!',
-    requireInteraction: true,
-    vibrate: [500, 200, 500]
-  }
-});
-```
-
-## 📝 Lisensi
-
-MIT License - Bebas digunakan untuk keperluan pondok pesantren, TPQ, madrasah, sekolah, dan lembaga pendidikan Islam lainnya.
+Free untuk digunakan pribadi dan komersial.
 
 ---
-
-**Dibuat dengan ❤️ untuk kemajuan pendidikan Islam** 🕌
+**Salam** — Sistem Aplikasi Laporan Anak Mengaji 📖

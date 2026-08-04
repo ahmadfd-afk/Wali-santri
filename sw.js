@@ -1,338 +1,188 @@
-/**
- * SALAM - Service Worker
- * Sistem Aplikasi Laporan Anak Mengaji
- * Fitur: Notifikasi Kuat, Persistent, Background Sync, Push Notification
- * Version: 2.0.0
- */
+/* ================================================================
+   SALAM PWA - Service Worker (Notifikasi Kuat & Persisten)
+   ================================================================ */
 
-const CACHE_VERSION = 'salam-v2.0.0';
-const CACHE_NAME = `salam-cache-${CACHE_VERSION}`;
-const RUNTIME_CACHE = `salam-runtime-${CACHE_VERSION}`;
-
-// Resources to precache
-const PRECACHE_URLS = [
+const CACHE_NAME = 'salam-pwa-v1.0.0';
+const CACHE_URLS = [
   './',
   './index.html',
   './manifest.json',
-  './icons/icon-72x72.png',
-  './icons/icon-96x96.png',
-  './icons/icon-128x128.png',
-  './icons/icon-144x144.png',
-  './icons/icon-152x152.png',
-  './icons/icon-180x180.png',
-  './icons/icon-192x192.png',
-  './icons/icon-256x256.png',
-  './icons/icon-384x384.png',
-  './icons/icon-512x512.png',
-  './icons/maskable-192x192.png',
-  './icons/maskable-512x512.png',
-  'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css'
+  './icon-72.png',
+  './icon-96.png',
+  './icon-128.png',
+  './icon-144.png',
+  './icon-152.png',
+  './icon-192.png',
+  './icon-384.png',
+  './icon-512.png',
+  './icon-maskable-192.png',
+  './icon-maskable-512.png',
+  './apple-touch-icon.png',
+  './favicon.png',
+  'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css',
+  'https://unpkg.com/html5-qrcode'
 ];
 
-// ==========================
-// INSTALL
-// ==========================
+/* ---------------- INSTALL ---------------- */
 self.addEventListener('install', event => {
-  console.log('[SW-Salam] Installing service worker...');
+  self.skipWaiting();
   event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then(cache => {
-        console.log('[SW-Salam] Precaching app shell');
-        return cache.addAll(PRECACHE_URLS.map(url => new Request(url, { cache: 'reload' })))
-          .catch(err => {
-            console.warn('[SW-Salam] Precache partial fail:', err);
-            // Fallback: cache one by one
-            return Promise.all(
-              PRECACHE_URLS.map(url =>
-                cache.add(url).catch(e => console.warn('Skip:', url))
-              )
-            );
-          });
-      })
-      .then(() => self.skipWaiting())
+    caches.open(CACHE_NAME).then(cache => {
+      return cache.addAll(CACHE_URLS.map(u => new Request(u, { cache: 'reload' })))
+        .catch(err => console.log('[SW] Cache warmup partial:', err));
+    })
   );
 });
 
-// ==========================
-// ACTIVATE
-// ==========================
+/* ---------------- ACTIVATE ---------------- */
 self.addEventListener('activate', event => {
-  console.log('[SW-Salam] Activating...');
   event.waitUntil(
     Promise.all([
-      // Clear old caches
-      caches.keys().then(keys =>
-        Promise.all(
-          keys.filter(key => key !== CACHE_NAME && key !== RUNTIME_CACHE)
-              .map(key => caches.delete(key))
-        )
-      ),
-      // Claim clients immediately
+      caches.keys().then(keys => Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)))),
       self.clients.claim()
     ])
   );
 });
 
-// ==========================
-// FETCH - Cache first with network fallback
-// ==========================
+/* ---------------- FETCH (Cache-first, network fallback) ---------------- */
 self.addEventListener('fetch', event => {
-  if (event.request.method !== 'GET') return;
-  
-  const url = new URL(event.request.url);
-  
-  // Skip cross-origin non-CDN requests
-  if (url.origin !== self.location.origin && 
-      !url.hostname.includes('cdnjs.cloudflare.com') &&
-      !url.hostname.includes('script.google.com') &&
-      !url.hostname.includes('googleusercontent.com')) {
-    return;
-  }
-  
-  // Google Apps Script - always network
-  if (url.hostname.includes('script.google.com')) {
-    event.respondWith(
-      fetch(event.request).catch(() => new Response(JSON.stringify({error: 'offline'}), {
-        headers: {'Content-Type': 'application/json'}
-      }))
-    );
-    return;
-  }
-  
+  const req = event.request;
+  if (req.method !== 'GET') return;
+
+  // Never cache API cloud calls (Supabase REST)
+  if (req.url.includes('/rest/v1/')) return;
+
   event.respondWith(
-    caches.match(event.request).then(cached => {
-      if (cached) {
-        // Refresh cache in background
-        fetch(event.request).then(response => {
-          if (response.ok) {
-            caches.open(RUNTIME_CACHE).then(cache => cache.put(event.request, response));
-          }
-        }).catch(() => {});
-        return cached;
-      }
-      return fetch(event.request).then(response => {
-        if (response.ok) {
-          const clone = response.clone();
-          caches.open(RUNTIME_CACHE).then(cache => cache.put(event.request, clone));
+    caches.match(req).then(cached => {
+      if (cached) return cached;
+      return fetch(req).then(resp => {
+        if (resp && resp.status === 200 && resp.type === 'basic') {
+          const clone = resp.clone();
+          caches.open(CACHE_NAME).then(c => c.put(req, clone));
         }
-        return response;
-      }).catch(() => {
-        // Offline fallback
-        if (event.request.destination === 'document') {
-          return caches.match('./index.html');
-        }
-      });
+        return resp;
+      }).catch(() => caches.match('./index.html'));
     })
   );
 });
 
-// ==========================
-// PUSH NOTIFICATION - UNSTOPPABLE
-// ==========================
-self.addEventListener('push', event => {
-  console.log('[SW-Salam] Push received');
-  
-  let data = {
-    title: 'Salam - Laporan Anak Mengaji',
-    body: 'Ada update baru mengenai anak Anda.',
-    icon: './icons/icon-192x192.png',
-    badge: './icons/icon-96x96.png',
-    tag: 'salam-notif-' + Date.now()
-  };
-  
-  try {
-    if (event.data) {
-      const payload = event.data.json();
-      data = Object.assign(data, payload);
-    }
-  } catch (e) {
-    if (event.data) data.body = event.data.text();
-  }
-  
-  const options = {
-    body: data.body,
-    icon: data.icon || './icons/icon-192x192.png',
-    badge: data.badge || './icons/icon-96x96.png',
-    image: data.image,
-    vibrate: [300, 100, 300, 100, 300, 100, 500],
-    sound: data.sound,
-    tag: data.tag,
-    renotify: true,        // Notify again even with same tag
-    requireInteraction: true, // Notification stays until user interacts
-    silent: false,
-    timestamp: Date.now(),
-    data: {
-      url: data.url || './',
-      dateOfArrival: Date.now(),
-      primaryKey: data.tag
-    },
-    actions: [
-      { action: 'open', title: '📖 Buka Aplikasi', icon: './icons/icon-96x96.png' },
-      { action: 'close', title: '✖ Tutup' }
-    ]
-  };
-  
-  event.waitUntil(
-    self.registration.showNotification(data.title, options)
-      .then(() => {
-        // Broadcast to all clients
-        return self.clients.matchAll({ type: 'window', includeUncontrolled: true });
-      })
-      .then(clients => {
-        clients.forEach(client => {
-          client.postMessage({
-            type: 'PUSH_RECEIVED',
-            data: data
-          });
-        });
-      })
-  );
-});
-
-// ==========================
-// NOTIFICATION CLICK - Focus or open app
-// ==========================
-self.addEventListener('notificationclick', event => {
-  console.log('[SW-Salam] Notification clicked:', event.action);
-  event.notification.close();
-  
-  if (event.action === 'close') return;
-  
-  const urlToOpen = event.notification.data?.url || './';
-  
-  event.waitUntil(
-    self.clients.matchAll({ type: 'window', includeUncontrolled: true })
-      .then(clientList => {
-        for (const client of clientList) {
-          if ('focus' in client) {
-            client.postMessage({ type: 'NOTIFICATION_CLICK', data: event.notification.data });
-            return client.focus();
-          }
-        }
-        if (self.clients.openWindow) {
-          return self.clients.openWindow(urlToOpen);
-        }
-      })
-  );
-});
-
-// ==========================
-// NOTIFICATION CLOSE - Re-notify (unstoppable)
-// ==========================
-self.addEventListener('notificationclose', event => {
-  console.log('[SW-Salam] Notification closed without action, primaryKey:', event.notification.data?.primaryKey);
-  // Optional: send analytics
-});
-
-// ==========================
-// BACKGROUND SYNC
-// ==========================
+/* ---------------- BACKGROUND SYNC ---------------- */
 self.addEventListener('sync', event => {
-  console.log('[SW-Salam] Background Sync:', event.tag);
   if (event.tag === 'salam-sync-absensi') {
-    event.waitUntil(syncAbsensi());
-  }
-});
-
-async function syncAbsensi() {
-  try {
-    const clients = await self.clients.matchAll();
-    clients.forEach(client => {
-      client.postMessage({ type: 'SYNC_ABSENSI' });
-    });
-  } catch (e) {
-    console.error('[SW-Salam] Sync error:', e);
-  }
-}
-
-// ==========================
-// PERIODIC BACKGROUND SYNC (checks every ~15 min while installed)
-// ==========================
-self.addEventListener('periodicsync', event => {
-  console.log('[SW-Salam] Periodic Sync:', event.tag);
-  if (event.tag === 'salam-cek-absensi') {
     event.waitUntil(cekAbsensiBackground());
   }
 });
 
-async function cekAbsensiBackground() {
-  try {
-    // Trigger a local notification as heartbeat / update check
-    const lastCheck = await getLastCheck();
-    const now = Date.now();
-    
-    // Notify clients to refresh data
-    const clients = await self.clients.matchAll({ includeUncontrolled: true });
-    if (clients.length === 0) {
-      // App not open - show reminder notification
-      await self.registration.showNotification('Salam - Cek Kehadiran', {
-        body: 'Tap untuk cek update terbaru kehadiran anak Anda.',
-        icon: './icons/icon-192x192.png',
-        badge: './icons/icon-96x96.png',
-        tag: 'salam-periodic',
-        renotify: true,
-        requireInteraction: false,
-        vibrate: [200, 100, 200],
-        data: { url: './' }
-      });
-    } else {
-      clients.forEach(c => c.postMessage({ type: 'PERIODIC_CHECK' }));
-    }
-    await setLastCheck(now);
-  } catch (e) {
-    console.error('[SW-Salam] Periodic error:', e);
-  }
-}
-
-// IndexedDB-lite via cache metadata
-async function getLastCheck() {
-  const cache = await caches.open('salam-meta');
-  const res = await cache.match('last-check');
-  return res ? parseInt(await res.text()) : 0;
-}
-async function setLastCheck(ts) {
-  const cache = await caches.open('salam-meta');
-  await cache.put('last-check', new Response(String(ts)));
-}
-
-// ==========================
-// MESSAGE HANDLER - Client -> SW
-// ==========================
-self.addEventListener('message', event => {
-  console.log('[SW-Salam] Message:', event.data);
-  
-  if (!event.data) return;
-  
-  if (event.data.type === 'SKIP_WAITING') {
-    self.skipWaiting();
-  }
-  
-  if (event.data.type === 'SHOW_NOTIFICATION') {
-    const { title, body, icon, tag, requireInteraction, vibrate, actions } = event.data.payload || {};
-    self.registration.showNotification(title || 'Salam', {
-      body: body || '',
-      icon: icon || './icons/icon-192x192.png',
-      badge: './icons/icon-96x96.png',
-      tag: tag || 'salam-manual',
-      renotify: true,
-      requireInteraction: requireInteraction !== false, // Default TRUE = tidak bisa distop otomatis
-      vibrate: vibrate || [300, 100, 300, 100, 300],
-      silent: false,
-      timestamp: Date.now(),
-      data: { url: './' },
-      actions: actions || [
-        { action: 'open', title: '📖 Buka' },
-        { action: 'close', title: '✖ Tutup' }
-      ]
-    });
-  }
-  
-  if (event.data.type === 'REGISTER_PERIODIC') {
-    // Client asks to register periodic sync
-    self.registration.periodicSync?.register('salam-cek-absensi', {
-      minInterval: 15 * 60 * 1000 // 15 minutes minimum
-    }).catch(e => console.warn('Periodic sync unavailable:', e));
+/* ---------------- PERIODIC BACKGROUND SYNC ---------------- */
+self.addEventListener('periodicsync', event => {
+  if (event.tag === 'salam-periodic-check') {
+    event.waitUntil(cekAbsensiBackground());
   }
 });
 
-console.log('[SW-Salam] Service Worker loaded, version:', CACHE_VERSION);
+/* ---------------- PUSH NOTIFICATION ---------------- */
+self.addEventListener('push', event => {
+  let payload = { title: 'Salam - Info Kehadiran', body: 'Ada update baru untuk anak Anda.' };
+  try { if (event.data) payload = event.data.json(); } catch (e) {}
+
+  event.waitUntil(
+    self.registration.showNotification(payload.title || 'Salam', {
+      body: payload.body || 'Ada update kehadiran anak Anda.',
+      icon: 'icon-192.png',
+      badge: 'icon-96.png',
+      vibrate: [300, 100, 300, 100, 300, 100, 500],
+      tag: 'salam-notif-' + Date.now(),
+      renotify: true,
+      requireInteraction: true,
+      silent: false,
+      data: { url: './index.html', time: Date.now() },
+      actions: [
+        { action: 'open', title: 'Buka Aplikasi' },
+        { action: 'close', title: 'Tutup' }
+      ]
+    })
+  );
+});
+
+/* ---------------- NOTIFICATION CLICK ---------------- */
+self.addEventListener('notificationclick', event => {
+  event.notification.close();
+  if (event.action === 'close') return;
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then(list => {
+      for (const client of list) {
+        if (client.url.includes('index.html') && 'focus' in client) return client.focus();
+      }
+      if (clients.openWindow) return clients.openWindow('./index.html');
+    })
+  );
+});
+
+/* ---------------- MESSAGE (dari page) ---------------- */
+self.addEventListener('message', event => {
+  if (!event.data) return;
+  const d = event.data;
+
+  if (d.type === 'SHOW_NOTIFICATION') {
+    self.registration.showNotification(d.title || 'Salam', {
+      body: d.body || '',
+      icon: 'icon-192.png',
+      badge: 'icon-96.png',
+      vibrate: [300, 100, 300, 100, 300],
+      tag: 'salam-push-' + Date.now(),
+      renotify: true,
+      requireInteraction: true,
+      silent: false,
+      data: { url: './index.html' }
+    });
+  }
+
+  if (d.type === 'SAVE_CONFIG') {
+    self.salamConfig = { u: d.u, k: d.k, nis: d.nis, lastCount: d.lastCount || 0 };
+  }
+
+  if (d.type === 'SKIP_WAITING') self.skipWaiting();
+});
+
+/* ---------------- POLLING BACKGROUND (Fallback tanpa Push server) ---------------- */
+async function cekAbsensiBackground() {
+  try {
+    const cfg = self.salamConfig;
+    if (!cfg || !cfg.u || !cfg.k || !cfg.nis) return;
+
+    const res = await fetch(`${cfg.u}/rest/v1/backup_lms?id=eq.1&select=*`, {
+      headers: { 'apikey': cfg.k, 'Authorization': `Bearer ${cfg.k}` }
+    });
+    const data = await res.json();
+    if (!data || !data.length) return;
+
+    const db = data[0].data_json || {};
+    const list = db.absensi || [];
+
+    if (list.length > (cfg.lastCount || 0)) {
+      const sesi = list[list.length - 1];
+      const rec = (sesi.detail || []).find(d => String(d.nis) === String(cfg.nis));
+      if (rec) {
+        let body = `Anak Anda: ${rec.status} pada ${sesi.mapel} (${sesi.tanggal})`;
+        await self.registration.showNotification('Salam - Update Kehadiran', {
+          body,
+          icon: 'icon-192.png',
+          badge: 'icon-96.png',
+          vibrate: [300, 100, 300, 100, 500],
+          tag: 'salam-bg-' + Date.now(),
+          renotify: true,
+          requireInteraction: true
+        });
+      }
+      cfg.lastCount = list.length;
+      self.salamConfig = cfg;
+    }
+  } catch (e) {
+    console.log('[SW] background check err:', e);
+  }
+}
+
+/* ---------------- SELF-HEARTBEAT (paksa aktif) ---------------- */
+setInterval(() => {
+  cekAbsensiBackground();
+}, 60000);
