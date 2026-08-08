@@ -26,15 +26,11 @@
     <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
     <link rel="shortcut icon" href="favicon.png">
 
-    <!-- Microsoft Tiles -->
-    <meta name="msapplication-TileColor" content="#04432A">
-    <meta name="msapplication-TileImage" content="icon-144.png">
-
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root { --primary: #04432A; --accent: #D4AF37; --bg: #F8F9FA; --card: #ffffff; --text: #2C3E50; --danger: #E74C3C; --success: #27AE60; }
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
-        body { background: #000; color: var(--text); display: flex; justify-content: center; }
+        body { background: #000; color: var(--text); display: flex; justify-content: center; min-height: 100vh; }
         .app-container { width: 100%; max-width: 500px; min-height: 100vh; background: var(--bg); position: relative; display: flex; flex-direction: column; }
 
         header { background: linear-gradient(135deg, var(--primary), #0B6B46); color: white; padding: 25px 20px; text-align: center; border-bottom-left-radius: 28px; border-bottom-right-radius: 28px; border-bottom: 4px solid var(--accent); box-shadow: 0 10px 20px rgba(0,0,0,0.1); transition: 0.3s; position: relative; }
@@ -58,6 +54,31 @@
         #install-banner { position: fixed; bottom: 12px; left: 50%; transform: translateX(-50%); background: var(--primary); color: white; padding: 12px 18px; border-radius: 12px; box-shadow: 0 8px 25px rgba(0,0,0,0.3); z-index: 9999; display: none; align-items: center; gap: 12px; font-size: 0.85rem; max-width: 92%; }
         #install-banner button { background: var(--accent); color: white; border: none; padding: 8px 14px; border-radius: 8px; font-weight: bold; cursor: pointer; }
         #install-banner .close-x { background: transparent; padding: 4px 8px; font-size: 1.1rem; }
+
+        /* ================== CSS SLIDESHOW / DIGITAL FRAME ================== */
+        #slideshow-modal {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 10000;
+            background: #000; display: flex; flex-direction: column; justify-content: space-between;
+            padding: 24px; overflow: hidden;
+        }
+        .slide-bg {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background-size: cover; background-position: center;
+            transition: opacity 1.5s ease-in-out; z-index: 1;
+            filter: brightness(0.65);
+        }
+        .slide-content {
+            position: relative; z-index: 10; color: white; text-shadow: 0 2px 10px rgba(0,0,0,0.8);
+            display: flex; flex-direction: column; justify-content: space-between; height: 100%;
+        }
+        .digital-clock { font-size: 3.5rem; font-weight: 800; line-height: 1; letter-spacing: 2px; }
+        .digital-date { font-size: 1.1rem; font-weight: 600; color: #F4E29F; margin-top: 4px; }
+        .child-overlay-card {
+            background: rgba(4, 67, 42, 0.78); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
+            border: 1px solid rgba(255,255,255,0.3); border-radius: 20px; padding: 16px;
+            display: flex; align-items: center; gap: 14px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+        .child-overlay-card img { width: 60px; height: 60px; border-radius: 50%; object-fit: cover; border: 2px solid var(--accent); }
     </style>
 </head>
 <body>
@@ -89,6 +110,11 @@
 
         <!-- VIEW: PROFIL & LAPORAN -->
         <div id="view-profil" class="hidden">
+            <!-- TOMBOL FITUR BINGKAI DIGITAL (WALLPAPER SLIDESHOW) -->
+            <button class="btn-primary" style="margin-bottom: 16px; background: linear-gradient(135deg, #0B6B46, var(--primary)); display: flex; align-items: center; justify-content: center; gap: 10px; padding: 12px;" onclick="bukaModeSlideshow()">
+                <i class="fa-solid fa-tv"></i> Aktifkan Mode Bingkai Digital (Slideshow)
+            </button>
+
             <div class="card" style="display: flex; gap: 15px; align-items: center; border-left: 5px solid var(--accent); position: relative;">
                 <div id="loading-overlay" class="hidden">
                     <i class="fa-solid fa-satellite-dish fa-beat-fade" style="font-size: 2.5rem; color: var(--primary); margin-bottom: 10px;"></i>
@@ -109,8 +135,26 @@
                 <i class="fa-solid fa-shield-check" style="font-size: 1.5rem; color: var(--success);"></i>
                 <p style="font-size: 0.72rem; color: #2C3E50; line-height: 1.4;">
                     <strong style="color:var(--success);">Notifikasi & Monitoring Latar Belakang AKTIF.</strong>
-                    Anda akan menerima laporan otomatis (PWA) saat ada update absen masuk.
+                    Anda akan menerima laporan otomatis saat ada update kehadiran anak.
                 </p>
+            </div>
+
+            <!-- CARD BARU: TABUNGAN & RIWAYAT BELANJA (PAGUYUBAN) -->
+            <div class="card" style="border-left: 5px solid #27AE60;">
+                <h3 style="font-size: 0.95rem; color: #27AE60; margin-bottom: 10px;"><i class="fa-solid fa-wallet"></i> Tabungan & Riwayat Belanja</h3>
+                <div style="background: rgba(39, 174, 96, 0.08); padding: 12px; border-radius: 12px; text-align: center; margin-bottom: 12px;">
+                    <span style="font-size: 0.75rem; color: #555; font-weight: 600;">SISA SALDO TABUNGAN AKTIF</span>
+                    <h2 style="color: #27AE60; font-size: 1.5rem; font-weight: 800; margin-top: 2px;">Rp <span id="p-saldo-tabungan">0</span></h2>
+                </div>
+                <p style="font-size: 0.75rem; font-weight: bold; color: var(--text); margin-bottom: 8px;">Mutasi Setoran & Belanja (Paguyuban):</p>
+                <div style="max-height: 180px; overflow-y: auto;">
+                    <table>
+                        <thead><tr><th>Tanggal</th><th>Keterangan</th><th style="text-align: right;">Nominal</th></tr></thead>
+                        <tbody id="tabel-riwayat-tabungan">
+                            <tr><td colspan="3" align="center">Memuat riwayat transaksi...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
 
             <div class="card">
@@ -142,6 +186,37 @@
     </main>
 </div>
 
+<!-- ================== MODAL BINGKAI DIGITAL (SLIDESHOW WALLPAPER) ================== -->
+<div id="slideshow-modal" class="hidden">
+    <div id="slide-bg-1" class="slide-bg" style="opacity: 1;"></div>
+    <div id="slide-bg-2" class="slide-bg" style="opacity: 0;"></div>
+
+    <div class="slide-content">
+        <!-- Atas: Jam & Tanggal -->
+        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+            <div>
+                <div class="digital-clock" id="clock-display">00:00</div>
+                <div class="digital-date" id="date-display">Senin, 1 Januari 2026</div>
+            </div>
+            <button onclick="tutupModeSlideshow()" style="background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.4); color: white; padding: 10px 16px; border-radius: 12px; cursor: pointer; font-weight: bold; font-size: 0.85rem;">
+                <i class="fa-solid fa-xmark"></i> Tutup Mode
+            </button>
+        </div>
+
+        <!-- Bawah: Info Anak & Kehadiran Terbaru -->
+        <div class="child-overlay-card">
+            <img id="slide-p-foto" src="https://cdn-icons-png.flaticon.com/512/847/847969.png">
+            <div style="flex: 1;">
+                <h3 id="slide-p-nama" style="font-size: 1.15rem; color: #fff; text-transform: uppercase;">NAMA ANAK</h3>
+                <p id="slide-p-info" style="font-size: 0.8rem; color: #F4E29F;">NIS: - | Kamar: -</p>
+                <div id="slide-p-status" style="margin-top: 6px; font-size: 0.8rem; background: rgba(255,255,255,0.18); padding: 4px 10px; border-radius: 8px; display: inline-block;">
+                    Status Kehadiran: <strong style="color: #2ECC71;">Memuat...</strong>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Install PWA prompt banner -->
 <div id="install-banner">
     <i class="fa-solid fa-download" style="font-size: 1.4rem;"></i>
@@ -161,6 +236,16 @@
     let currentNisAnak = '';
     let cloudConfigCache = { u: '', k: '' };
     let deferredPrompt = null;
+
+    // VARIABEL SLIDESHOW WALLPAPER
+    let slideTimer = null;
+    let clockTimer = null;
+    let slideIndex = 0;
+    let listWallpaperSlides = [
+        "https://images.unsplash.com/photo-1519817650390-28a59b20892c?q=80&w=1000&auto=format&fit=crop",
+        "https://images.unsplash.com/photo-1584551246679-0daf3d275d0f?q=80&w=1000&auto=format&fit=crop"
+    ];
+    let currentLayer = 1;
 
     // KAMUS ISTILAH DINAMIS
     const termDict = {
@@ -187,7 +272,6 @@
             prosesDataHasilScanWali(savedNis);
         }
 
-        // Auto-request notification permission on first load
         setTimeout(() => {
             if ('Notification' in window && Notification.permission === 'default') {
                 Notification.requestPermission();
@@ -271,6 +355,11 @@
                     if (yayasanObj.logo) {
                         document.getElementById('header-yayasan-logo').src = yayasanObj.logo;
                     }
+
+                    // AMBIL DATA WALLPAPER SLIDESHOW DARI ADMIN YAYASAN
+                    if (yayasanObj.wallpaper_slides && Array.isArray(yayasanObj.wallpaper_slides) && yayasanObj.wallpaper_slides.length > 0) {
+                        listWallpaperSlides = yayasanObj.wallpaper_slides;
+                    }
                 }
 
                 currentNisAnak = nis;
@@ -278,7 +367,6 @@
                 lastAbsensiCount = (dbCloud.absensi || []).length;
                 localStorage.setItem('wali_saved_nis', nis);
 
-                // Kirim config ke Service Worker untuk polling background
                 if (navigator.serviceWorker && navigator.serviceWorker.controller) {
                     navigator.serviceWorker.controller.postMessage({
                         type: 'SAVE_CONFIG',
@@ -289,11 +377,17 @@
                     });
                 }
 
+                // ISI PROFIL UI & SLIDESHOW OVERLAY
                 document.getElementById('p-foto').src = santri.foto || 'https://cdn-icons-png.flaticon.com/512/847/847969.png';
                 document.getElementById('p-nama').innerText = santri.nama;
                 document.getElementById('p-nis').innerText = santri.nis;
                 document.getElementById('p-kamar').innerText = `${santri.asrama} - ${santri.kamar}`;
 
+                document.getElementById('slide-p-foto').src = santri.foto || 'https://cdn-icons-png.flaticon.com/512/847/847969.png';
+                document.getElementById('slide-p-nama').innerText = santri.nama;
+                document.getElementById('slide-p-info').innerText = `NIS: ${santri.nis} | Kamar: ${santri.asrama} - ${santri.kamar}`;
+
+                // STATUS IZIN
                 let izinAktif = (dbCloud.history_izin || []).filter(i => String(i.nis) === String(nis));
                 let izinSedangKeluar = izinAktif.filter(i => i.status === 'Keluar');
                 let izinStr = "";
@@ -304,8 +398,10 @@
                 else { izinStr = "Ada di instansi (Belum pernah izin)."; }
                 document.getElementById('p-status-izin').innerHTML = izinStr;
 
+                // ABSENSI
                 refreshUIAbsensiHanyaTabel(dbCloud.absensi || []);
 
+                // EVALUASI
                 let evalAnak = (dbCloud.evaluasi || []).find(e => String(e.nis) === String(nis));
                 if(evalAnak) {
                     document.getElementById('p-evaluasi-box').innerHTML = `
@@ -316,6 +412,10 @@
                     `;
                 } else { document.getElementById('p-evaluasi-box').innerHTML = "Belum mendapatkan penilaian evaluasi akhir."; }
 
+                // TABUNGAN & RIWAYAT BELANJA
+                renderUITabunganWali(dbCloud.tabungan || []);
+
+                // DENDA
                 let dendaAnak = (dbCloud.tagihan || []).filter(k => String(k.nis) === String(nis));
                 let dendaBox = document.getElementById('p-denda-box');
                 if(dendaAnak.length > 0) {
@@ -326,7 +426,6 @@
                 } else { dendaBox.innerHTML = "<span style='color:green; font-weight:bold;'>Tidak ada tanggungan denda/sanksi.</span>"; }
 
                 document.getElementById('loading-overlay').classList.add('hidden');
-
                 aktifkanMonitoringOtomatis();
 
             } else {
@@ -343,6 +442,100 @@
         }
     }
 
+    // ============ RENDER UI TABUNGAN & BELANJA ============
+    function renderUITabunganWali(listTabunganSemua) {
+        let riwayatAnak = listTabunganSemua.filter(t => String(t.nis) === String(currentNisAnak));
+        let totalSaldo = 0;
+        let tbody = document.getElementById('tabel-riwayat-tabungan');
+        tbody.innerHTML = '';
+
+        if (riwayatAnak.length === 0) {
+            document.getElementById('p-saldo-tabungan').innerText = "0";
+            tbody.innerHTML = '<tr><td colspan="3" align="center">Belum ada transaksi tabungan.</td></tr>';
+            return;
+        }
+
+        // Urutkan dari yang terbaru
+        riwayatAnak.sort((a, b) => new Date(b.tanggal || 0) - new Date(a.tanggal || 0));
+
+        riwayatAnak.forEach(trx => {
+            let nominal = parseInt(trx.nominal) || 0;
+            totalSaldo += nominal;
+            let isMasuk = nominal > 0;
+            let tglFormat = trx.tanggal ? new Date(trx.tanggal).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' }) : '-';
+            let ket = isMasuk ? 'Setoran Masuk' : `Belanja (${trx.pedagang || 'Paguyuban'})`;
+            let color = isMasuk ? '#27AE60' : '#E74C3C';
+
+            tbody.innerHTML += `
+                <tr>
+                    <td>${tglFormat}</td>
+                    <td>${ket}</td>
+                    <td style="text-align: right; color: ${color}; font-weight: bold;">
+                        ${isMasuk ? '+' : ''} Rp ${nominal.toLocaleString('id-ID')}
+                    </td>
+                </tr>
+            `;
+        });
+
+        document.getElementById('p-saldo-tabungan').innerText = totalSaldo.toLocaleString('id-ID');
+    }
+
+    // ============ LOGIKA MODE BINGKAI DIGITAL (SLIDESHOW) ============
+    function bukaModeSlideshow() {
+        document.getElementById('slideshow-modal').classList.remove('hidden');
+        if (document.documentElement.requestFullscreen) {
+            document.documentElement.requestFullscreen().catch(() => {});
+        }
+        mulaiSlideshowTimer();
+        mulaiClockTimer();
+    }
+
+    function tutupModeSlideshow() {
+        document.getElementById('slideshow-modal').classList.add('hidden');
+        if (document.exitFullscreen && document.fullscreenElement) {
+            document.exitFullscreen().catch(() => {});
+        }
+        clearInterval(slideTimer);
+        clearInterval(clockTimer);
+    }
+
+    function mulaiSlideshowTimer() {
+        if (listWallpaperSlides.length === 0) return;
+        slideIndex = 0;
+        gantiGambarSlide();
+
+        if (slideTimer) clearInterval(slideTimer);
+        slideTimer = setInterval(() => {
+            slideIndex = (slideIndex + 1) % listWallpaperSlides.length;
+            gantiGambarSlide();
+        }, 6000); // Ganti foto setiap 6 detik
+    }
+
+    function gantiGambarSlide() {
+        let imgUrl = listWallpaperSlides[slideIndex];
+        let nextLayerEl = document.getElementById(currentLayer === 1 ? 'slide-bg-2' : 'slide-bg-1');
+        let currentLayerEl = document.getElementById(currentLayer === 1 ? 'slide-bg-1' : 'slide-bg-2');
+
+        nextLayerEl.style.backgroundImage = `url('${imgUrl}')`;
+        nextLayerEl.style.opacity = '1';
+        currentLayerEl.style.opacity = '0';
+
+        currentLayer = currentLayer === 1 ? 2 : 1;
+    }
+
+    function mulaiClockTimer() {
+        const updateJam = () => {
+            const now = new Date();
+            const jam = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
+            const tgl = now.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+            document.getElementById('clock-display').innerText = jam;
+            document.getElementById('date-display').innerText = tgl;
+        };
+        updateJam();
+        if (clockTimer) clearInterval(clockTimer);
+        clockTimer = setInterval(updateJam, 1000);
+    }
+
     function gantiAnak() {
         if(liveInterval) clearInterval(liveInterval);
         if(keepAliveInterval) clearInterval(keepAliveInterval);
@@ -354,9 +547,8 @@
         document.getElementById('header-yayasan-sub').innerText = 'Sistem Aplikasi Laporan Anak Mengaji';
     }
 
-    // ============ LIVE MONITORING & PUSH NOTIFIKASI KUAT ============
+    // ============ LIVE MONITORING & PUSH NOTIFIKASI ============
     async function aktifkanMonitoringOtomatis() {
-        // 1. Minta izin notifikasi (paksa ulang jika belum granted)
         if ('Notification' in window && Notification.permission !== 'granted') {
             let perm = await Notification.requestPermission();
             if (perm !== 'granted') {
@@ -364,7 +556,6 @@
             }
         }
 
-        // 2. Aktifkan Wake Lock supaya layar/CPU tidak dimatikan agresif
         try {
             if ('wakeLock' in navigator) {
                 wakeLock = await navigator.wakeLock.request('screen');
@@ -374,34 +565,15 @@
                     }
                 });
             }
-        } catch(e) { console.log('WakeLock tidak tersedia:', e); }
+        } catch(e) {}
 
-        // 3. Daftar Periodic Background Sync (Chrome)
-        try {
-            const reg = await navigator.serviceWorker.ready;
-            if ('periodicSync' in reg) {
-                const status = await navigator.permissions.query({ name: 'periodic-background-sync' });
-                if (status.state === 'granted') {
-                    await reg.periodicSync.register('salam-periodic-check', { minInterval: 60 * 1000 });
-                }
-            }
-            if ('sync' in reg) {
-                await reg.sync.register('salam-sync-absensi');
-            }
-        } catch(e) { console.log('BgSync tidak tersedia:', e); }
-
-        // 4. Interval foreground (cepat, 15 detik)
         if (liveInterval) clearInterval(liveInterval);
         liveInterval = setInterval(cekAbsenTerbaru, 15000);
 
-        // 5. Keep-alive heartbeat untuk service worker (setiap 20 detik)
         if (keepAliveInterval) clearInterval(keepAliveInterval);
         keepAliveInterval = setInterval(() => {
             if (navigator.serviceWorker && navigator.serviceWorker.controller) {
                 navigator.serviceWorker.controller.postMessage({ type: 'PING', time: Date.now() });
-            }
-            // Update config di SW
-            if (navigator.serviceWorker && navigator.serviceWorker.controller) {
                 navigator.serviceWorker.controller.postMessage({
                     type: 'SAVE_CONFIG',
                     u: cloudConfigCache.u,
@@ -433,8 +605,10 @@
                     }
                     lastAbsensiCount = listAbsensi.length;
                 }
+                // Refresh saldo tabungan jika ada update dari cloud
+                if (dbCloud.tabungan) renderUITabunganWali(dbCloud.tabungan);
             }
-        } catch (err) { console.log("Live monitoring background check..."); }
+        } catch (err) {}
     }
 
     function bunyikanSuaraNotifikasi(statusAbsen, mapel) {
@@ -446,7 +620,6 @@
         else if (statusAbsen === 'Izin') { teksSuara = `Informasi. Anak anda tercatat izin pada kegiatan ${mapel}.`; }
         else if (statusAbsen === 'Sakit') { teksSuara = `Informasi. Anak anda tercatat sakit pada kegiatan ${mapel}.`; }
 
-        // === Push Notifikasi via Service Worker (persisten & vibrasi kuat) ===
         if ('Notification' in window && Notification.permission === 'granted') {
             if (navigator.serviceWorker && navigator.serviceWorker.ready) {
                 navigator.serviceWorker.ready.then(reg => {
@@ -454,17 +627,10 @@
                         body: teksSuara,
                         icon: 'icon-192.png',
                         badge: 'icon-96.png',
-                        image: 'icon-512.png',
-                        vibrate: [300, 100, 300, 100, 300, 100, 500, 200, 500],
+                        vibrate: [300, 100, 300, 100, 300],
                         tag: 'salam-live-' + Date.now(),
                         renotify: true,
-                        requireInteraction: true,   // Tidak auto-dismiss
-                        silent: false,
-                        data: { url: './index.html', status: statusAbsen, mapel: mapel },
-                        actions: [
-                            { action: 'open', title: 'Buka Salam' },
-                            { action: 'close', title: 'Tutup' }
-                        ]
+                        requireInteraction: true
                     });
                 });
             } else {
@@ -472,11 +638,10 @@
             }
         }
 
-        // === Trigger Suara TTS ===
         if (teksSuara !== "" && 'speechSynthesis' in window) {
             window.speechSynthesis.cancel();
             const utterance = new SpeechSynthesisUtterance(teksSuara);
-            utterance.lang = 'id-ID'; utterance.rate = 0.9; utterance.volume = 1;
+            utterance.lang = 'id-ID'; utterance.rate = 0.9;
             window.speechSynthesis.speak(utterance);
         }
     }
@@ -484,6 +649,7 @@
     function refreshUIAbsensiHanyaTabel(listAbsensiSemua) {
         let tbodyAbsen = document.getElementById('tabel-absen-anak'); tbodyAbsen.innerHTML = '';
         let cnt = { Hadir: 0, Izin: 0, Sakit: 0, Alpa: 0 }; let adaAbsen = false;
+        let statusTerakhirTeks = "Belum ada kegiatan hari ini";
 
         listAbsensiSemua.forEach(sesi => {
             (sesi.detail || []).forEach(d => {
@@ -491,6 +657,7 @@
                     adaAbsen = true;
                     if (cnt[d.status] !== undefined) cnt[d.status]++;
                     tbodyAbsen.innerHTML += `<tr><td>${sesi.tanggal}</td><td>${sesi.mapel}</td><td><span style="font-weight:bold; color:${d.status==='Hadir'?'green':'red'}">${d.status}</span></td></tr>`;
+                    statusTerakhirTeks = `${d.status} (${sesi.mapel})`;
                 }
             });
         });
@@ -502,29 +669,20 @@
             <div class="stat-box" style="color:var(--danger);">Alpa<br>${cnt.Alpa}</div>
         `;
         if(!adaAbsen) tbodyAbsen.innerHTML = '<tr><td colspan="3" align="center">Belum ada catatan absensi kelas.</td></tr>';
+
+        // Update teks di Slideshow Digital
+        const slideStatusEl = document.getElementById('slide-p-status');
+        if(slideStatusEl) {
+            slideStatusEl.innerHTML = `Status Kehadiran Terbaru: <strong style="color: #F4E29F;">${statusTerakhirTeks}</strong>`;
+        }
     }
 
-    // ================== SERVICE WORKER REGISTRATION ==================
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-            navigator.serviceWorker.register('sw.js', { scope: './' })
-                .then(reg => {
-                    console.log('Salam SW terdaftar. Scope:', reg.scope);
-                    // Update SW jika ada versi baru
-                    reg.addEventListener('updatefound', () => {
-                        const nw = reg.installing;
-                        nw.addEventListener('statechange', () => {
-                            if (nw.state === 'installed' && navigator.serviceWorker.controller) {
-                                nw.postMessage({ type: 'SKIP_WAITING' });
-                            }
-                        });
-                    });
-                })
-                .catch(err => console.log('Salam SW gagal:', err));
+            navigator.serviceWorker.register('sw.js', { scope: './' }).catch(() => {});
         });
     }
 
-    // ================== PWA INSTALL PROMPT ==================
     window.addEventListener('beforeinstallprompt', (e) => {
         e.preventDefault();
         deferredPrompt = e;
@@ -541,27 +699,6 @@
 
     document.getElementById('btn-close-install').addEventListener('click', () => {
         document.getElementById('install-banner').style.display = 'none';
-    });
-
-    window.addEventListener('appinstalled', () => {
-        document.getElementById('install-banner').style.display = 'none';
-        console.log('Salam terinstall!');
-    });
-
-    // ============ CEGAH TAB DITUTUP TANPA SENGAJA ============
-    window.addEventListener('beforeunload', (e) => {
-        if (currentNisAnak) {
-            // Simpan state terakhir agar SW tetap bisa polling
-            if (navigator.serviceWorker && navigator.serviceWorker.controller) {
-                navigator.serviceWorker.controller.postMessage({
-                    type: 'SAVE_CONFIG',
-                    u: cloudConfigCache.u,
-                    k: cloudConfigCache.k,
-                    nis: currentNisAnak,
-                    lastCount: lastAbsensiCount
-                });
-            }
-        }
     });
 </script>
 </body>
