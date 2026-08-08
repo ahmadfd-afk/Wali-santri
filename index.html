@@ -59,7 +59,7 @@
         #slideshow-modal {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 10000;
             background: #000; display: flex; flex-direction: column; justify-content: space-between;
-            padding: 24px; overflow: hidden;
+            padding: 24px; padding-bottom: 60px; overflow: hidden;
         }
         .slide-bg {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
@@ -79,6 +79,15 @@
             display: flex; align-items: center; gap: 14px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
         }
         .child-overlay-card img { width: 60px; height: 60px; border-radius: 50%; object-fit: cover; border: 2px solid var(--accent); }
+        
+        /* CSS TAMBAHAN UNTUK RUNNING TEXT */
+        .running-text-box {
+            position: absolute; bottom: 0; left: 0; width: 100%;
+            background: rgba(0,0,0,0.7); backdrop-filter: blur(5px);
+            color: #F4E29F; padding: 12px 0; font-size: 1.15rem; font-weight: bold;
+            z-index: 100; border-top: 2px solid rgba(255,255,255,0.2);
+            letter-spacing: 1px;
+        }
     </style>
 </head>
 <body>
@@ -214,6 +223,11 @@
                 </div>
             </div>
         </div>
+    </div>
+    
+    <!-- Elemen Running Text / Line News -->
+    <div class="running-text-box">
+        <marquee id="slide-running-text" scrollamount="5">Memuat informasi terbaru...</marquee>
     </div>
 </div>
 
@@ -356,6 +370,13 @@
                         document.getElementById('header-yayasan-logo').src = yayasanObj.logo;
                     }
 
+                    // Menarik Teks Berita (Running Text) yang disetting dari Admin
+                    if (yayasanObj.teks_berita && yayasanObj.teks_berita.trim() !== '') {
+                        document.getElementById('slide-running-text').innerText = yayasanObj.teks_berita;
+                    } else {
+                        document.getElementById('slide-running-text').innerText = `Selamat Datang di ${yayasanObj.pondok || 'Aplikasi Salam'} - Mari Pantau Kegiatan Ananda.`;
+                    }
+
                     // AMBIL DATA WALLPAPER SLIDESHOW DARI ADMIN YAYASAN
                     if (yayasanObj.wallpaper_slides && Array.isArray(yayasanObj.wallpaper_slides) && yayasanObj.wallpaper_slides.length > 0) {
                         listWallpaperSlides = yayasanObj.wallpaper_slides;
@@ -428,6 +449,9 @@
                 document.getElementById('loading-overlay').classList.add('hidden');
                 aktifkanMonitoringOtomatis();
 
+                // PERINTAH BARU: Otomatis membuka Mode Slideshow langsung tanpa ditekan!
+                bukaModeSlideshow();
+
             } else {
                 alert("Data server kosong. Instansi belum melakukan sinkronisasi ke cloud.");
                 document.getElementById('loading-overlay').classList.add('hidden');
@@ -455,7 +479,6 @@
             return;
         }
 
-        // Urutkan dari yang terbaru
         riwayatAnak.sort((a, b) => new Date(b.tanggal || 0) - new Date(a.tanggal || 0));
 
         riwayatAnak.forEach(trx => {
@@ -483,18 +506,22 @@
     // ============ LOGIKA MODE BINGKAI DIGITAL (SLIDESHOW) ============
     function bukaModeSlideshow() {
         document.getElementById('slideshow-modal').classList.remove('hidden');
-        if (document.documentElement.requestFullscreen) {
-            document.documentElement.requestFullscreen().catch(() => {});
-        }
+        try {
+            if (document.documentElement.requestFullscreen) {
+                document.documentElement.requestFullscreen().catch(() => {});
+            }
+        } catch(e) {}
         mulaiSlideshowTimer();
         mulaiClockTimer();
     }
 
     function tutupModeSlideshow() {
         document.getElementById('slideshow-modal').classList.add('hidden');
-        if (document.exitFullscreen && document.fullscreenElement) {
-            document.exitFullscreen().catch(() => {});
-        }
+        try {
+            if (document.exitFullscreen && document.fullscreenElement) {
+                document.exitFullscreen().catch(() => {});
+            }
+        } catch(e) {}
         clearInterval(slideTimer);
         clearInterval(clockTimer);
     }
@@ -508,7 +535,7 @@
         slideTimer = setInterval(() => {
             slideIndex = (slideIndex + 1) % listWallpaperSlides.length;
             gantiGambarSlide();
-        }, 6000); // Ganti foto setiap 6 detik
+        }, 6000);
     }
 
     function gantiGambarSlide() {
@@ -605,7 +632,12 @@
                     }
                     lastAbsensiCount = listAbsensi.length;
                 }
-                // Refresh saldo tabungan jika ada update dari cloud
+                
+                // Refresh teks berita jika diubah admin
+                if (dbCloud.yayasan && dbCloud.yayasan.teks_berita) {
+                    document.getElementById('slide-running-text').innerText = dbCloud.yayasan.teks_berita;
+                }
+
                 if (dbCloud.tabungan) renderUITabunganWali(dbCloud.tabungan);
             }
         } catch (err) {}
@@ -688,7 +720,6 @@
         deferredPrompt = e;
         document.getElementById('install-banner').style.display = 'flex';
     });
-
     document.getElementById('btn-install').addEventListener('click', async () => {
         if (!deferredPrompt) return;
         deferredPrompt.prompt();
