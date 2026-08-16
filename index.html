@@ -295,12 +295,30 @@
         document.getElementById('label-qr-desc').innerText = `Arahkan kamera ke QR Code pada Kartu Identitas ${t.santri.toLowerCase()} untuk menarik data otomatis dari server.`;
     }
 
-    document.addEventListener('DOMContentLoaded', () => {
-        let savedConf = localStorage.getItem('wali_sup_conf');
-        let savedNis = localStorage.getItem('wali_saved_nis');
-        if (savedConf && savedNis) {
-            document.getElementById('input-nis-manual').value = savedNis;
-            prosesDataHasilScanWali(savedNis);
+        document.addEventListener('DOMContentLoaded', () => {
+        // 1. Cek apakah ada parameter dari URL (Hasil Scan Kamera HP Bawaan)
+        const urlParams = new URLSearchParams(window.location.search);
+        const urlNis = urlParams.get('nis');
+        const urlU = urlParams.get('u');
+        const urlK = urlParams.get('k');
+
+        if (urlNis && urlU && urlK) {
+            // Ubah format URL menjadi format JSON agar bisa dibaca oleh fungsi prosesDataHasilScanWali
+            let dummyQRData = JSON.stringify({ n: urlNis, u: urlU, k: urlK });
+            document.getElementById('input-nis-manual').value = urlNis;
+            prosesDataHasilScanWali(dummyQRData);
+            
+            // Hapus parameter URL agar rapi (opsional)
+            window.history.replaceState({}, document.title, window.location.pathname);
+        } 
+        // 2. Jika tidak ada parameter URL, gunakan data lama yang tersimpan di HP
+        else {
+            let savedConf = localStorage.getItem('wali_sup_conf');
+            let savedNis = localStorage.getItem('wali_saved_nis');
+            if (savedConf && savedNis) {
+                document.getElementById('input-nis-manual').value = savedNis;
+                prosesDataHasilScanWali(savedNis);
+            }
         }
 
         setTimeout(() => {
@@ -309,6 +327,7 @@
             }
         }, 1500);
     });
+
 
     function bukaScannerWali() {
         document.getElementById('reader-wali').style.display = 'block';
